@@ -10,7 +10,7 @@ const loadMoreBtn = document.querySelector('.load_more');
 axios.defaults.baseURL = 'https://pixabay.com/api';
 
 let page = 1;
-let perPage = 40;
+let perPage = 100;
 let currentQuery = '';
 
 async function searchImages(imageName) {
@@ -33,6 +33,7 @@ async function searchImages(imageName) {
 
             return response.data;
 }
+
 
 function renderGallery(images, append = false) {
     const gallery = document.querySelector('.gallery');
@@ -110,8 +111,23 @@ async function getImages(query) {
 async function loadMore() {
     try {
         const images = await getImages(currentQuery);
+        const totalPages = Math.ceil(images.totalHits / perPage);
+        if (page > totalPages) {
+            iziToast.error({
+                message: "We're sorry, but you've reached the end of search results."
+            });
+            loadMoreBtn.style.display = 'none';
+            return;
+        }
+
         page += 1;
-        renderGallery(images,true);
+        renderGallery(images, true);
+        
+        const galleryItemHeight = getGalleryItemHeight();
+        window.scrollBy({
+            top: galleryItemHeight * 2,
+            behavior: 'smooth',
+        });
     } catch (error) {
         throw new Error("Error load new images.");
     }
@@ -127,11 +143,32 @@ async function handleLoadMore() {
     }
 
     try {
+        const images = await getImages(currentQuery);
+        const totalPages = Math.ceil(images.totalHits / perPage);
+
+        if (page > totalPages) {
+            iziToast.error({
+                message: "We're sorry, but you've reached the end of search results."
+            });
+            loadMoreBtn.style.display = 'none';
+            return;
+        }
         await loadMore();
-    } finally {
-        // form.reset();
+    } catch (error) {
+        console.error('Error during handling "Load More":', error);
+        throw new Error("Error during handling 'Load More'.");
     }
 }
 
 form.addEventListener('submit', handleSearch);
 loadMoreBtn.addEventListener('click', handleLoadMore);
+
+function getGalleryItemHeight(){
+    const galleryItem = document.querySelector('.gallery-item');
+
+    if (galleryItem) {
+        const rect = galleryItem.getBoundingClientRect();
+        return rect.height;
+    }
+    return 0;
+}
