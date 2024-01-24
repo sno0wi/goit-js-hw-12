@@ -6,6 +6,8 @@ import axios from "axios";
 
 const form = document.querySelector('.form');
 const loadMoreBtn = document.querySelector('.load_more');
+const lightbox = new SimpleLightbox('.gallery a');
+const loader = document.querySelector('.loader')
 
 axios.defaults.baseURL = 'https://pixabay.com/api';
 
@@ -26,12 +28,14 @@ async function searchImages(imageName) {
     safesearch: true,
 });
     
+    loader.style.display = 'block';
+    
     const response = await axios.get(`/?${params}`);
             if (response.status !== 200){
                     throw new Error("No images found. Please try again with a different search query.");
             }
 
-            return response.data;
+    return response.data;
 }
 
 
@@ -64,9 +68,13 @@ function renderGallery(images, append = false) {
     ).join('');
 
     gallery.innerHTML += imageHTML;
-    const lightbox = new SimpleLightbox('.gallery a');
     lightbox.refresh();
+
+    if (!append) {
+        loadMoreBtn.style.display = 'block';
+    }
     
+    loader.style.display = 'none';
     loadMoreBtn.style.display = 'block';
 }
 
@@ -86,10 +94,11 @@ async function handleSearch(event) {
         return;
     }
 
+    page = 1;
+
     try {
         const images = await searchImages(currentQuery);
         renderGallery(images);
-        page = 1;
     } catch (error) {
         iziToast.error({
             message: error.message,
@@ -104,7 +113,9 @@ async function getImages(query) {
         const images = await searchImages(query);
         return images;
     } catch (error) {
-        throw new Error("Error load new images.");
+        iziToast.error({
+            message: "Error load new images."
+        });
     }
 }
 
@@ -120,7 +131,7 @@ async function loadMore() {
             return;
         }
 
-        page += 1;
+        page ++;
         renderGallery(images, true);
         
         const galleryItemHeight = getGalleryItemHeight();
@@ -129,11 +140,15 @@ async function loadMore() {
             behavior: 'smooth',
         });
     } catch (error) {
-        throw new Error("Error load new images.");
+        iziToast.error({
+            message: "Error load new images."
+        });
     }
+    loader.style.display = 'none';
 }
 
 async function handleLoadMore() {
+    loader.style.display = 'block';
 
     if (!currentQuery) {
         iziToast.warning({
@@ -143,16 +158,6 @@ async function handleLoadMore() {
     }
 
     try {
-        const images = await getImages(currentQuery);
-        const totalPages = Math.ceil(images.totalHits / perPage);
-
-        if (page > totalPages) {
-            iziToast.error({
-                message: "We're sorry, but you've reached the end of search results."
-            });
-            loadMoreBtn.style.display = 'none';
-            return;
-        }
         await loadMore();
     } catch (error) {
         console.error('Error during handling "Load More":', error);
