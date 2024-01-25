@@ -128,7 +128,7 @@ async function loadMore() {
         const images = await getImages(currentQuery);
         const totalPages = Math.ceil(images.totalHits / perPage);
         if (page >= totalPages) {
-            iziToast.error({
+            iziToast.info({
                 message: "We're sorry, but you've reached the end of search results."
             });
             setTimeout(() => {
