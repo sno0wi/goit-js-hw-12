@@ -75,7 +75,6 @@ function renderGallery(images, append = false) {
         loadMoreBtn.classList.add('visible');
     }
     
-    // loader.classList.remove('visible');
     setTimeout(() => {
         loader.classList.remove('visible');
     }, 50);
@@ -132,7 +131,6 @@ async function loadMore() {
             iziToast.error({
                 message: "We're sorry, but you've reached the end of search results."
             });
-            // loader.classList.remove('visible');
             setTimeout(() => {
                 loader.classList.remove('visible');
             }, 500);
@@ -151,7 +149,6 @@ async function loadMore() {
             message: "Error load new images."
         });
     } finally {
-        // loader.classList.remove('visible');
         setTimeout(() => {
             loader.classList.remove('visible');
         }, 500);
