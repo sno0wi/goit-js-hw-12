@@ -12,7 +12,7 @@ const loader = document.querySelector('.loader')
 axios.defaults.baseURL = 'https://pixabay.com/api';
 
 let page = 1;
-let perPage = 100;
+let perPage = 40;
 let currentQuery = '';
 
 async function searchImages(imageName) {
@@ -27,12 +27,13 @@ async function searchImages(imageName) {
     orientation: 'horizontal',
     safesearch: true,
 });
-    
-    loader.style.display = 'block';
+    loader.classList.add('visible');
     
     const response = await axios.get(`/?${params}`);
             if (response.status !== 200){
-                    throw new Error("No images found. Please try again with a different search query.");
+                iziToast.error({
+                    message: "No images found. Please try again with a different search query."
+                });
             }
 
     return response.data;
@@ -48,7 +49,7 @@ function renderGallery(images, append = false) {
 
     if (images.hits.length === 0) {
         iziToast.error({
-            message: "No images found. Please try again with a different search query.",
+            message: "No images found. Please try again with a different search query."
         });
         return;
     }
@@ -71,17 +72,19 @@ function renderGallery(images, append = false) {
     lightbox.refresh();
 
     if (!append) {
-        loadMoreBtn.style.display = 'block';
+        loadMoreBtn.classList.add('visible');
     }
     
-    loader.style.display = 'none';
-    loadMoreBtn.style.display = 'block';
+    // loader.classList.remove('visible');
+    setTimeout(() => {
+        loader.classList.remove('visible');
+    }, 50);
 }
 
 async function handleSearch(event) {
     event.preventDefault();
 
-    loadMoreBtn.style.display = 'none';
+    loadMoreBtn.classList.remove('visible');
 
     const formElement = event.currentTarget;
     const query = formElement.elements.query.value;
@@ -109,6 +112,8 @@ async function handleSearch(event) {
 }
 
 async function getImages(query) {
+    page++;
+    
     try {
         const images = await searchImages(query);
         return images;
@@ -123,15 +128,17 @@ async function loadMore() {
     try {
         const images = await getImages(currentQuery);
         const totalPages = Math.ceil(images.totalHits / perPage);
-        if (page > totalPages) {
+        if (page >= totalPages) {
             iziToast.error({
                 message: "We're sorry, but you've reached the end of search results."
             });
-            loadMoreBtn.style.display = 'none';
-            return;
+            // loader.classList.remove('visible');
+            setTimeout(() => {
+                loader.classList.remove('visible');
+            }, 500);
+            loadMoreBtn.classList.remove('visible');
         }
 
-        page ++;
         renderGallery(images, true);
         
         const galleryItemHeight = getGalleryItemHeight();
@@ -143,12 +150,16 @@ async function loadMore() {
         iziToast.error({
             message: "Error load new images."
         });
+    } finally {
+        // loader.classList.remove('visible');
+        setTimeout(() => {
+            loader.classList.remove('visible');
+        }, 500);
     }
-    loader.style.display = 'none';
 }
 
 async function handleLoadMore() {
-    loader.style.display = 'block';
+    loader.classList.add('visible');
 
     if (!currentQuery) {
         iziToast.warning({
@@ -160,8 +171,9 @@ async function handleLoadMore() {
     try {
         await loadMore();
     } catch (error) {
-        console.error('Error during handling "Load More":', error);
-        throw new Error("Error during handling 'Load More'.");
+        iziToast.error({
+            message: "Error during handling 'Load More'."
+        });
     }
 }
 

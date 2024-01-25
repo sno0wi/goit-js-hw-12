@@ -110,6 +110,7 @@ body {
   display: none;
   box-sizing: border-box;
   animation: rotation 1s linear infinite;
+  transition: opacity 0.3s ease-in-out;
 }
 
 .loader::after {
@@ -124,6 +125,10 @@ body {
   border-radius: 50%;
   border: 3px solid transparent;
   border-bottom-color: #FF3D00;
+}
+
+.visible {
+  display: block;
 }
 
 @keyframes rotation {
